@@ -274,18 +274,10 @@ def bias_genre_rating_dataset(genre_ratings, score_limit_1, score_limit_2):
     biased_dataset = pd.DataFrame(biased_dataset.to_records())
     return biased_dataset
 
-# helper functions to deal with multi-hot features
-def group_indices(series, index="id"):
-    d = {}
-    for i in range(series.size):
-        l = eval(series.iloc[i])
-        for x in l:
-            d.setdefault(x[index], [])
-            d[x[index]].append(i)
-    return d
-def multi_count(series, index="id"):
-    return {k: len(v) for (k, v) in group_indices(series, index).items()}
 
+# Visualization
+def multi_count(series, index="id"):
+    return {k: v for (k, v) in series}
 
 # numbers of movies of different genres and keywords
 def multi_bar(series, filename):
@@ -302,16 +294,14 @@ def multi_bar(series, filename):
     plt.show()
 
 
-# Visualize
 # wordcloud of genres and keywords
 def multi_wordcloud(series, filename):
     w = wc.WordCloud(background_color="white", margin=20, width=800,
                      height=600, prefer_horizontal=0.7, max_words=50, scale=2)
     count = multi_count(series, "name")
+    # print(count)
+
     w.generate_from_frequencies(count)
-    # if saving:
-    # w.to_file(filename)
-    # f, ax = plt.subplots(figsize=(16, 8))
     plt.axis('off')
     plt.imshow(w)
     plt.show()
