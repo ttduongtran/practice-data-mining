@@ -22,27 +22,29 @@ def draw_scatterplot(x_data, x_label, y_data, y_label):
     ax.scatter(x_data, y_data, s=30)
 
 # ve bieu do phan cum
-def draw_clusters(biased_dataset, predictions, cmap='viridis'):
+
+
+def draw_clusters(biased_dataset, predictions, genre_ratings_avg_columns, cmap='viridis'):
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
     plt.xlim(0, 5)
     plt.ylim(0, 5)
-    ax.set_xlabel('Avg scifi rating')
-    ax.set_ylabel('Avg romance rating')
+    ax.set_xlabel(genre_ratings_avg_columns[1])
+    ax.set_ylabel(genre_ratings_avg_columns[0])
 
     clustered = pd.concat([biased_dataset.reset_index(),
                            pd.DataFrame({'group': predictions})], axis=1)
-    plt.scatter(clustered['avg_scifi_rating'],
-                clustered['avg_romance_rating'], c=clustered['group'], s=20, cmap=cmap)
+    plt.scatter(clustered[genre_ratings_avg_columns[1]],
+                clustered[genre_ratings_avg_columns[0]], c=clustered['group'], s=20, cmap=cmap)
 
 
 def clustering_errors(k, data):
     kmeans = KMeans(n_clusters=k).fit(data)
     predictions = kmeans.predict(data)
-    #cluster_centers = kmeans.cluster_centers_
-    # errors = [mean_squared_error(row, cluster_centers[cluster]) for row, cluster in zip(data.values, predictions)]
-    # return sum(errors)
-    silhouette_avg = silhouette_score(data, predictions)
+    # The silhouette_score gives the average value for all the samples.
+    # This gives a perspective into the density and separation of the formed
+    # clusters
+    silhouette_avg = silhouette_score(data, predictions)  # silhouette_avg in [-1,1]
     return silhouette_avg
 
 
@@ -136,11 +138,11 @@ def draw_movie_clusters(clustered, max_users, max_movies):
         d = d.iloc[:max_users, :max_movies]
         n_users_in_plot = d.shape[0]
 
-        # We're only selecting to show clusters that have more than 9 users, otherwise, they're less interesting
-        if len(d) > 9:
+        # Only selecting to show clusters that have more than 9 users
+        if len(d) > 10:
             print('cluster # {}'.format(cluster_id))
-            print('# of users in cluster: {}.'.format(n_users_in_cluster),
-                  '# of users in plot: {}'.format(n_users_in_plot))
+            print('# of users in cluster: {}.'.format(n_users_in_cluster))
+            # ,'# of users in plot: {}'.format(n_users_in_plot)
             fig = plt.figure(figsize=(15, 4))
             ax = plt.gca()
 
@@ -262,14 +264,13 @@ def draw_movies_heatmap(most_rated_movies_users_selection, axis_labels=True):
 
 
 # kiem tra pham vi thien vi
-def in_range_of_bias(a, b, x, y):
-    return ((a < x - 0.2) & (b > y)) | ((b < x) & (a > y))
-    # return ((a < x) & (b > y)) | ((b < x) & (a > y))
+def in_range_of_bias(rating_1, rating_2, limit_1, limit_2):
+    return ((rating_1 < limit_1 - 0.2) & (rating_2 > limit_2)) | ((rating_2 < limit_1) & (rating_1 > limit_2))
 
 # thien vi ve luot xep hang (rating) the loai phim
-def bias_genre_rating_dataset(genre_ratings, score_limit_1, score_limit_2):
+def bias_genre_rating_dataset(genre_ratings, genre_ratings_avg_columns, score_limit_1, score_limit_2):
     biased_dataset = genre_ratings[in_range_of_bias(
-        genre_ratings['avg_romance_rating'], genre_ratings['avg_scifi_rating'], score_limit_1, score_limit_2)]
+        genre_ratings[genre_ratings_avg_columns[0]], genre_ratings[genre_ratings_avg_columns[1]], score_limit_1, score_limit_2)]
     biased_dataset = pd.concat([biased_dataset[:300], genre_ratings[:2]])
     biased_dataset = pd.DataFrame(biased_dataset.to_records())
     return biased_dataset
@@ -279,7 +280,7 @@ def bias_genre_rating_dataset(genre_ratings, score_limit_1, score_limit_2):
 def multi_count(series, index="id"):
     return {k: v for (k, v) in series}
 
-# numbers of movies of different genres and keywords
+# numbers of movies of different genres
 def multi_bar(series, filename):
     sns.set(style="whitegrid")
     count = multi_count(series, "name")
@@ -294,7 +295,7 @@ def multi_bar(series, filename):
     plt.show()
 
 
-# wordcloud of genres and keywords
+# wordcloud of genres
 def multi_wordcloud(series, filename):
     w = wc.WordCloud(background_color="white", margin=20, width=800,
                      height=600, prefer_horizontal=0.7, max_words=50, scale=2)
