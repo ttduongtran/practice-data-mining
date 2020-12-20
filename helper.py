@@ -22,8 +22,6 @@ def draw_scatterplot(x_data, x_label, y_data, y_label):
     ax.scatter(x_data, y_data, s=30)
 
 # ve bieu do phan cum
-
-
 def draw_clusters(biased_dataset, predictions, genre_ratings_avg_columns, cmap='viridis'):
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
@@ -61,11 +59,9 @@ def get_genre_ratings(ratings, movies, genres, column_names):
     genre_ratings = pd.DataFrame()
     for genre in genres:
         genre_movies = movies[movies['genres'].str.contains(genre)]
-        avg_genre_votes_per_user = ratings[ratings['movieId'].isin(genre_movies['movieId'])].loc[:, [
-            'userId', 'rating']].groupby(['userId'])['rating'].mean().round(2)
+        avg_genre_votes_per_user = ratings[ratings['movieId'].isin(genre_movies['movieId'])].loc[:, ['userId', 'rating']].groupby(['userId'])['rating'].mean().round(2)
 
-        genre_ratings = pd.concat(
-            [genre_ratings, avg_genre_votes_per_user], axis=1)
+        genre_ratings = pd.concat([genre_ratings, avg_genre_votes_per_user], axis=1)
 
     genre_ratings.columns = column_names
     return genre_ratings
@@ -109,6 +105,7 @@ def draw_clusters_3d(biased_dataset_3, predictions):
 
     for g in clustered.group.unique():
         color = next(colors)
+        # iterrows: returns a Series for each row, it does not preserve dtypes across the rows
         for index, point in clustered[clustered.group == g].iterrows():
             if point['avg_action_rating'].astype(float) > 3:
                 size = 50
@@ -209,6 +206,7 @@ def get_users_who_rate_the_most(most_rated_movies, max_number_of_movies):
     most_rated_movies_users = most_rated_movies.sort_values('counts', ascending=False)
 
     # 3- Slice
+    # iloc: Indexing and selecting data
     most_rated_movies_users_selection = most_rated_movies_users.iloc[:max_number_of_movies, :]
     most_rated_movies_users_selection = most_rated_movies_users_selection.drop(['counts'], axis=1)
 
